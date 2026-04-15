@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>One Piece: Grand Line RPG</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: 'Courier New', sans-serif; overflow: hidden; touch-action: none; }
+        canvas { display: block; }
+        .screen { position: absolute; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.9); z-index: 10; }
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 20px; }
+        .btn { padding: 15px; border: 2px solid #f1c40f; background: #222; color: #fff; cursor: pointer; text-align: center; border-radius: 8px; }
+        .btn:active { background: #f1c40f; color: #000; }
+        .next { position: absolute; top: 20px; right: 20px; padding: 10px 20px; background: #27ae60; border-radius: 5px; font-weight: bold; }
+        #hud { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; pointer-events: none; font-size: 12px; border-left: 4px solid #f1c40f; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="menu-fruta" class="screen">
+        <h2>ESCOLHA SUA AKUMA NO MI</h2>
+        <div class="grid">
+            <div class="btn" onclick="setFruta('Luffy', '#fbc531')">Gomu Gomu (Borracha)</div>
+            <div class="btn" onclick="setFruta('Fogo', '#e84118')">Mera Mera (Fogo)</div>
+            <div class="btn" onclick="setFruta('Raio', '#f1c40f')">Goro Goro (Raio)</div>
+            <div class="btn" onclick="setFruta('Magma', '#c23616')">Magu Magu (Magma)</div>
+            <div class="btn" onclick="setFruta('Gelo', '#00a8ff')">Hie Hie (Gelo)</div>
+            <div class="btn" onclick="setFruta('Vento', '#dcdde1')">Suna Suna (Areia/Vento)</div>
+        </div>
+        <div id="next-fruta" class="next hidden" onclick="abrirEspadas()">PRÓXIMO ➔</div>
+    </div>
+
+    <div id="menu-espada" class="screen hidden">
+        <h2>ESCOLHA SUA ESPADA</h2>
+        <div class="grid">
+            <div class="btn" onclick="setEspada('Yama')">Enma (Yama)</div>
+            <div class="btn" onclick="setEspada('Tushuta')">Tushita</div>
+            <div class="btn" onclick="setEspada('Yoru')">Yoru (Mihawk)</div>
+            <div class="btn" onclick="setEspada('Saber')">Shanks Saber</div>
+        </div>
+        <div class="next" onclick="iniciarJogo()">JOGAR! ➔</div>
+    </div>
+
+    <div id="hud" class="hidden">
+        ILHA: <span id="txt-ilha" style="color:#f1c40f">EAST BLUE</span><br>
+        BOSS: <span id="txt-boss" style="color:#ff4757">ARLONG</span><br>
+        MAESTRIA: <span id="txt-maestria">0</span><br>
+        PODER: <span id="txt-poder">---</span>
+    </div>
+
+    <canvas id="game" class="hidden"></canvas>
+
+<script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    let fruta = "", corPoder = "#fff", espada = "", maestria = 0, status = "menu", localIdx = 0;
+
+    const progresso = [
+        { m: 0, nome: "EAST BLUE", boss: "Arlong", inimigo: "Marinheiro" },
+        { m: 50, nome: "ALABASTA", boss: "Crocodile", inimigo: "Vice-Almirante" },
+        { m: 100, nome: "MARINEFORD", boss: "Akainu", inimigo: "Almirante" },
+        { m: 200, nome: "WANO", boss: "KAIDO & BIG MOM", inimigo: "Piratas Fera" }
+    ];
+
+    function setFruta(nome, cor) {
+        fruta = nome; corPoder = cor;
+        document.getElementById("next-fruta").classList.remove("hidden");
+    }
+
+    function setEspada(nome) { espada = nome; }
+
+    function abrirEspadas() {
+        document.getElementById("menu-fruta").classList.add("hidden");
+        document.getElementById("menu-espada").classList.remove("hidden");
+    }
+
+    function iniciarJogo() {
+        document.getElementById("menu-espada").classList.add("hidden");
+        document.getElementById("game").classList.remove("hidden");
+        document.getElementById("hud").classList.remove("hidden");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        status = "jogando";
+        spawnInimigo();
+        loop();
+    }
+
+    let player = { x: 150, y: 0, w: 50, h: 50 };
+    let tiros = [], inimigos = [], aliados = [];
+
+    window.addEventListener("touchmove", (e) => {
+        player.x = e.touches[0].clientX - player.w/2;
+        player.y = e.touches[0].clientY - player.h/2;
+    });
+
+    function spawnInimigo() {
+        if(status !== "jogando") return;
+        inimigos.push({ x: Math.random()*canvas.width, y: -50, w: 40, h: 40, v: 3 + localIdx });
+        setTimeout(spawnInimigo, 1000 - (localIdx * 150));
+    }
+
+    function loop() {
+        if(status !== "jogando") return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Fundo por Ilha
+        let atual = progresso[localIdx];
+        if(maestria >= progresso[localIdx+1]?.m) localIdx++;
+        
+        document.getElementById("txt-ilha").innerText = atual.nome;
+        document.getElementById("txt-boss").innerText = atual.boss;
+        document.getElementById("txt-maestria").innerText = maestria;
+        document.getElementById("txt-poder").innerText = fruta + " + " + espada;
+
+        // Desenhar Player (Luffy/User)
+        ctx.fillStyle = corPoder;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.fillStyle = "#fff"; ctx.fillText(espada, player.x, player.y - 5);
+
+        // Aliados em Wano (Zoro, Sanji, Law, Kid)
+        if(atual.nome === "WANO") {
+            ctx.fillStyle = "#2ecc71"; ctx.fillRect(player.x - 60, player.y + 20, 30, 30); // Zoro/Law
+            ctx.fillStyle = "#e67e22"; ctx.fillRect(player.x + 80, player.y + 20, 30, 30); // Sanji/Kid
+            if(Math.random() < 0.05) tiros.push({x: player.x - 50, y: player.y, w: 5, h: 10, v: 10});
+        }
+
+        // Tiros (Poder da Fruta)
+        tiros.push({x: player.x + player.w/2, y: player.y, w: 8, h: 20, v: 10});
+        tiros.forEach((t, i) => {
+            t.y -= t.v;
+            ctx.fillStyle = corPoder;
+            ctx.fillRect(t.x, t.y, t.w, t.h);
+            if(t.y < 0) tiros.splice(i, 1);
+        });
+
+        // Inimigos
+        inimigos.forEach((inim, i) => {
+            inim.y += inim.v;
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(inim.x, inim.y, inim.w, inim.h);
+            ctx.fillStyle = "#ff4757"; ctx.fillText(atual.inimigo, inim.x, inim.y - 5);
+
+            tiros.forEach((t, ti) => {
+                if(t.x < inim.x + inim.w && t.x + t.w > inim.x && t.y < inim.y + inim.h) {
+                    inimigos.splice(i, 1);
+                    tiros.splice(ti, 1);
+                    maestria++;
+                }
+            });
+
+            if(inim.y > canvas.height) inimigos.splice(i, 1);
+            if(inim.y + inim.h > player.y && inim.x < player.x + player.w && inim.x + inim.w > player.x) {
+                alert("GAME OVER! Maestria: " + maestria);
+                location.reload();
+            }
+        });
+
+        requestAnimationFrame(loop);
+    }
+</script>
+</body>
+</html>
+
