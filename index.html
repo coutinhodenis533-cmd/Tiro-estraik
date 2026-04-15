@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One Piece: Batalha em Wano</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #fff;
+            font-family: 'Courier New', Courier, monospace;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            border: 2px solid #f1c40f;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .menu-btn {
+            background-color: #e67e22;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 5px;
+        }
+        .menu-btn:hover { background-color: #d35400; }
+        #game-screen { display: none; }
+        .stats { color: #2ecc71; margin-bottom: 10px; }
+        .log { background: #111; padding: 10px; height: 150px; overflow-y: auto; border: 1px solid #444; margin-bottom: 10px; text-align: left; }
+    </style>
+</head>
+<body>
+
+<div class="container" id="setup-screen">
+    <h1>🏴‍☠️ RPG ONE PIECE 🏴‍☠️</h1>
+    <p>Prepare-se para invadir Onigashima!</p>
+    
+    <h3>Escolha sua Akuma no Mi:</h3>
+    <button class="menu-btn" onclick="setPower('Mera Mera (Fogo)')">🔥 Mera Mera</button>
+    <button class="menu-btn" onclick="setPower('Goro Goro (Raio)')">⚡ Goro Goro</button>
+    <button class="menu-btn" onclick="setPower('Magu Magu (Magma)')">🌋 Magu Magu</button>
+    
+    <h3>Escolha sua Espada:</h3>
+    <button class="menu-btn" onclick="setWeapon('Enma')">⚔️ Enma</button>
+    <button class="menu-btn" onclick="setWeapon('Wado Ichimonji')">⚔️ Wado</button>
+    <button class="menu-btn" onclick="setWeapon('Yoru')">⚔️ Yoru</button>
+</div>
+
+<div class="container" id="game-screen">
+    <h2 id="battle-title">Batalha em Wano</h2>
+    <div class="stats">
+        <p>Luffy (Você) HP: <span id="player-hp">100</span> | Poder: <span id="p-power"></span></p>
+        <p>Kaido HP: <span id="boss-hp">150</span></p>
+    </div>
+    <div class="log" id="game-log">Bem-vindo a Wano! Seus aliados Zoro e Sanji estão prontos!</div>
+    <button class="menu-btn" onclick="attack()">Atacar Kaido!</button>
+    <button class="menu-btn" onclick="useSpecial()">Usar Especial!</button>
+</div>
+
+<script>
+    let playerHP = 100;
+    let bossHP = 150;
+    let power = "";
+    let weapon = "";
+
+    function setPower(p) { power = p; checkStart(); }
+    function setWeapon(w) { weapon = w; checkStart(); }
+
+    function checkStart() {
+        if(power !== "" && weapon !== "") {
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('p-power').innerText = power + " + " + weapon;
+            addLog("Você entrou na batalha com a " + power + " e a espada " + weapon + "!");
+        }
+    }
+
+    function addLog(msg) {
+        let log = document.getElementById('game-log');
+        log.innerHTML += "<br>> " + msg;
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function attack() {
+        if(bossHP <= 0) return;
+        let dmg = Math.floor(Math.random() * 15) + 5;
+        bossHP -= dmg;
+        document.getElementById('boss-hp').innerText = bossHP;
+        addLog("Você e Zoro atacaram! Kaido perdeu " + dmg + " de HP.");
+        
+        if(bossHP <= 0) {
+            addLog("✨ KAIDO DERROTADO! WANO ESTÁ LIVRE!");
+            return;
+        }
+        bossAttack();
+    }
+
+    function bossAttack() {
+        let dmg = Math.floor(Math.random() * 12) + 5;
+        playerHP -= dmg;
+        document.getElementById('player-hp').innerText = playerHP;
+        addLog("Kaido usou o Sopro de Dragão! Você perdeu " + dmg + " de HP.");
+        if(playerHP <= 0) addLog("❌ Você foi derrotado... Tente novamente!");
+    }
+
+    function useSpecial() {
+        if(bossHP <= 0) return;
+        let dmg = Math.floor(Math.random() * 30) + 10;
+        bossHP -= dmg;
+        document.getElementById('boss-hp').innerText = bossHP;
+        addLog("💥 ESPECIAL! Você usou o despertar da " + power + "! Dano: " + dmg);
+        bossAttack();
+    }
+</script>
+
+</body>
+</html>
