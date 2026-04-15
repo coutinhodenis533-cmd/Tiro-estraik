@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Luffy: Grand Line Tour</title>
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: sans-serif; overflow: hidden; touch-action: none; }
+        canvas { display: block; }
+        #hud {
+            position: absolute; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.8); padding: 10px; border: 2px solid #f1c40f; border-radius: 8px;
+            pointer-events: none; font-size: 12px;
+        }
+        .destaque { color: #f1c40f; font-weight: bold; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        Local: <span id="ilha" class="destaque">EAST BLUE</span><br>
+        Inimigo: <span id="boss" style="color: #ff4757;">Marinheiros</span><br>
+        Maestria: <span id="maestria" class="destaque">0</span><br>
+        Forma: <span id="forma" style="color: #00ff00;">Base</span>
+    </div>
+    <canvas id="game"></canvas>
+
+<script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    let maestria = 0;
+    let gameActive = true;
+    let player = { x: canvas.width/2, y: canvas.height-100, w: 50, h: 50, color: "#ffdbac" };
+    let tiros = [];
+    let inimigos = [];
+
+    // Dados das Ilhas, Chefes e Cores
+    const progresso = [
+        { m: 0, nome: "EAST BLUE", boss: "Arlong", cor: "#00aaff" },
+        { m: 20, nome: "IMPEL DOWN", boss: "Magellan", cor: "#4b4b4b" },
+        { m: 50, nome: "MARINEFORD", boss: "Akainu", cor: "#ff4500" },
+        { m: 100, nome: "ILHA DOS TRITÕES", boss: "Hody Jones", cor: "#005f6b" },
+        { m: 150, nome: "PUNK HAZARD", boss: "Caesar Clown", cor: "#e0e0e0" },
+        { m: 200, nome: "DRESSROSA", boss: "Doflamingo", cor: "#ff69b4" },
+        { m: 250, nome: "ZOU", boss: "Jack", cor: "#228b22" },
+        { m: 300, nome: "WHOLE CAKE", boss: "Big Mom", cor: "#ff1493" },
+        { m: 400, nome: "WANO", boss: "KAIDO", cor: "#2f3542" }
+    ];
+
+    function atualizarStatus() {
+        let atual = progresso[0];
+        progresso.forEach(p => { if(maestria >= p.m) atual = p; });
+
+        document.getElementById("ilha").innerText = atual.nome;
+        document.getElementById("boss").innerText = atual.boss;
+        document.getElementById("maestria").innerText = maestria;
+
+        // Evolução do Luffy
+        let forma = "Base";
+        if(maestria >= 50) { forma = "Gear 2"; player.color = "#ffafaf"; }
+        if(maestria >= 200) { forma = "Gear 4"; player.w = 80; player.h = 80; player.color = "#7d0000"; }
+        if(maestria >= 400) { forma = "GEAR 5"; player.color = "#ffffff"; }
+        document.getElementById("forma").innerText = forma;
+
+        return atual.cor;
+    }
+
+    window.addEventListener("touchmove", (e) => {
+        player.x = e.touches[0].clientX - player.w/2;
+    });
+
+    setInterval(() => {
+        if(!gameActive) return;
+        let largura = maestria >= 200 ? 40 : 10;
+        tiros.push({ x: player.x + player.w/2 - largura/2, y: player.y, w: largura, h: 20 });
+    }, 200);
+
+    function spawn() {
+        if(!gameActive) return;
+        inimigos.push({ 
+            x: Math.random() * (canvas.width - 50), 
+            y: -50, w: 50, h: 50, 
+            v: 4 + (maestria/50) 
+        });
+        setTimeout(spawn, Math.max(200, 1000 - (maestria * 2)));
+    }
+    spawn();
+
+    function draw() {
+        if(!gameActive) return;
+        let corFundo = atualizarStatus();
+        
+        ctx.fillStyle = corFundo;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        // Player
+        ctx.fillStyle = player.color;
+        ctx.fillRect(player.x, player.y, player.w, player.h);
+        ctx.fillStyle = "#f1c40f"; ctx.fillRect(player.x, player.y, player.w, 10); // Chapéu
+
+        // Tiros (Haki/Raios)
+        ctx.fillStyle = maestria >= 400 ? "#00fbff" : "#000";
+        tiros.forEach((t, i) => {
+            t.y -= 10;
+            ctx.fillRect(t.x, t.y, t.w, t.h);
+            if(t.y < 0) tiros.splice(i, 1);
+        });
+
+        // Inimigos
+        inimigos.forEach((inim, i) => {
+            inim.y += inim.v;
+            ctx.fillStyle = "#fff"; ctx.fillRect(inim.x, inim.y, inim.w, inim.h);
+            ctx.fillStyle = "#ff4757"; ctx.fillRect(inim.x, inim.y, inim.w, 5); // Barra de vida do boss
+
+            tiros.forEach((t, ti) => {
+                if(t.x < inim.x + inim.w && t.x + t.w > inim.x && t.y < inim.y + inim.h) {
+                    inimigos.splice(i, 1);
+                    tiros.splice(ti, 1);
+                    maestria++;
+                }
+            });
+
+            if(inim.y + inim.h > player.y && inim.x < player.x + player.w && inim.x + inim.w > player.x) {
+                gameActive = false;
+                alert("DERROTADO! Maestria: " + maestria);
+                location.reload();
+            }
+        });
+        requestAnimationFrame(draw);
+    }
+    draw();
+</script>
+</body>
+  </html>
+  
